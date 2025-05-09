@@ -40,12 +40,10 @@ static size_t write_callback(void *contents, size_t size, size_t nmemb, void *us
         fprintf(stderr, "Out of memory\n");
         return 0;
     }
-    
     mem->data = ptr;
     memcpy(&(mem->data[mem->size]), contents, realsize);
     mem->size += realsize;
-    mem->data[mem->size] = 0;
-    
+    mem->data[mem->size] = 0;   
     return realsize;
 }
 
@@ -168,9 +166,11 @@ int install_package(const char *package_name) {
         fprintf(stderr, "Failed to open %s\n", CPM_FILE);
         return 0;
     }
-    
     while (fgets(line, sizeof(line), fp)) {
         if (sscanf(line, "%255s %63s", name, version) == 2) {
+            if (strcmp(name, "name:") == 0 || strcmp(name, "version:") == 0) {
+                continue;
+            }
             if (package_name == NULL || strcmp(name, package_name) == 0) {
                 found = 1;
                 download_package(name, version);
@@ -180,16 +180,13 @@ int install_package(const char *package_name) {
             }
         }
     }
-    
     fclose(fp);
     if (package_name != NULL && !found) {
         fprintf(stderr, "Package %s not found in %s\n", package_name, CPM_FILE);
         return 0;
-    }
-    
+    }   
     return 1;
 }
-
 void scan_source_files(const char *dir, char **src_files, int *src_count, int scan_libs) {
     DIR *d;
     struct dirent *entry;
@@ -249,17 +246,19 @@ void generate_makefile() {
         free(lib_src_files);
         return;
     }
-    
     fprintf(fp, "CC = gcc\n");
     fprintf(fp, "CFLAGS = -Wall -Wextra -std=c99 -I. -I%s/include", CPM_DIR);
     d = opendir(CPM_DIR);
     if (d) {
         while ((entry = readdir(d)) != NULL) {
+            if (strcmp(entry->d_name, ".") == 0 || 
+                strcmp(entry->d_name, "..") == 0 ||
+                strcmp(entry->d_name, "name:") == 0 ||
+                strcmp(entry->d_name, "version:") == 0) {
+                continue;
+            }       
             snprintf(path, PATH_MAX, "%s/%s", CPM_DIR, entry->d_name);
-            if (stat(path, &file_stat) == 0 && 
-                S_ISDIR(file_stat.st_mode) && 
-                strcmp(entry->d_name, ".") != 0 && 
-                strcmp(entry->d_name, "..") != 0) {
+            if (stat(path, &file_stat) == 0 && S_ISDIR(file_stat.st_mode)) {
                 fprintf(fp, " -I%s/%s/include -I%s/%s", CPM_DIR, entry->d_name, CPM_DIR, entry->d_name);
                 char lib_dir[PATH_MAX];
                 snprintf(lib_dir, PATH_MAX, "%s/%s", CPM_DIR, entry->d_name);
@@ -268,41 +267,42 @@ void generate_makefile() {
         }
         closedir(d);
     }
-    
     fprintf(fp, "\n");
     fprintf(fp, "LDFLAGS = ");
     d = opendir(CPM_DIR);
     if (d) {
         while ((entry = readdir(d)) != NULL) {
+            if (strcmp(entry->d_name, ".") == 0 || 
+                strcmp(entry->d_name, "..") == 0 ||
+                strcmp(entry->d_name, "name:") == 0 ||
+                strcmp(entry->d_name, "version:") == 0) {
+                continue;
+            }       
             snprintf(path, PATH_MAX, "%s/%s", CPM_DIR, entry->d_name);
-            if (stat(path, &file_stat) == 0 && 
-                S_ISDIR(file_stat.st_mode) && 
-                strcmp(entry->d_name, ".") != 0 && 
-                strcmp(entry->d_name, "..") != 0) {
-                fprintf(fp, " -L%s/%s/lib", CPM_DIR, entry->d_name);
+            if (stat(path, &file_stat) == 0 && S_ISDIR(file_stat.st_mode)) {
+                fprintf(fp, "-L%s/%s/lib -L%s/%s", CPM_DIR, entry->d_name, CPM_DIR, entry->d_name);
             }
         }
         closedir(d);
     }
-    
     fprintf(fp, "\n");
     fprintf(fp, "LDLIBS = ");
     d = opendir(CPM_DIR);
     if (d) {
         while ((entry = readdir(d)) != NULL) {
+            if (strcmp(entry->d_name, ".") == 0 || 
+                strcmp(entry->d_name, "..") == 0 ||
+                strcmp(entry->d_name, "name:") == 0 ||
+                strcmp(entry->d_name, "version:") == 0) {
+                continue;
+            }       
             snprintf(path, PATH_MAX, "%s/%s", CPM_DIR, entry->d_name);
-            if (stat(path, &file_stat) == 0 && 
-                S_ISDIR(file_stat.st_mode) && 
-                strcmp(entry->d_name, ".") != 0 && 
-                strcmp(entry->d_name, "..") != 0 &&
-                strcmp(entry->d_name, "name:") != 0 &&
-                strcmp(entry->d_name, "version:") != 0) {
-                fprintf(fp, "-l%s ", entry->d_name);
+            if (stat(path, &file_stat) == 0 && S_ISDIR(file_stat.st_mode)) {
+                fprintf(fp, "");
             }
         }
         closedir(d);
     }
-    
     fprintf(fp, "\n\n");
     char proj_name[256] = "program";
     FILE *cpmfp = fopen(CPM_FILE, "r");
@@ -313,7 +313,6 @@ void generate_makefile() {
         }
         fclose(cpmfp);
     }
-    
     fprintf(fp, "SRC = ");
     for (int i = 0; i < src_count; i++) {
         fprintf(fp, "%s ", src_files[i]);
@@ -345,7 +344,6 @@ void generate_makefile() {
     }
     free(src_files);
     free(lib_src_files);
-    
     printf("Generated %s\n", MAKEFILE);
 }
 
