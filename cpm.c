@@ -21,6 +21,7 @@
 #define CPM_VERSION "0.1.0"
 #define MAKEFILE "Makefile"
 #define GITIGNORE ".gitignore"
+#define MAINC "main.c"
 #define URL_BASE "https://raw.githubusercontent.com/neoapps-dev/cpm-repo/refs/heads/main//"
 typedef struct {
     char name[256];
@@ -382,6 +383,18 @@ void init_project(const char *project_name) {
     fprintf(fp, "name: %s\n", name);
     fprintf(fp, "version: 0.1.0\n\n");
     fclose(fp);
+    FILE *fpc = fopen(MAINC, "r");
+    if (fpc == NULL) {
+        fp = fopen(MAINC, "w");
+        if (!fp) {
+            fprintf(stderr, "Failed to create %s\n", MAINC);
+            return;
+        }
+        fprintf(fp, "#include <stdio.h>\n\nint main() {\nprintf(\"Hello, World!\\n\");\nreturn 0;\n}");
+        fclose(fp);
+    } else {
+        fclose(fpc);
+    }
     generate_makefile();
     printf("Initialized C project: %s\n", name);
 }
