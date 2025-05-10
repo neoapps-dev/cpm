@@ -25,8 +25,8 @@ sudo make install
 
 ```bash
 cpm init my-awesome-project
-cpm add vector 1.0.0
-cpm add hashmap 2.1.3
+cpm add libfoo 1.0
+cpm add slog 1.8.48
 cpm install
 make
 ```
