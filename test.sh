@@ -6,7 +6,7 @@ cpm init my_app
 echo "Sample main.c file..."
 cat > main.c << 'EOF'
 #include <stdio.h>
-#include <libfoo.c>  // From a cpm package
+#include <libfoo.h>  // From a cpm package
 int main() {
     printf("Hello from CPM-managed project!\n");
     printf("%d\n", add(1, 1));

@@ -326,15 +326,15 @@ void generate_makefile() {
     fprintf(fp, "\n");
     fprintf(fp, "OBJ = $(SRC:.c=.o)\n");
     fprintf(fp, "LIB_OBJ = $(LIB_SRC:.c=.o)\n");
-    fprintf(fp, "TARGET = %s\n\n", proj_name);
-    fprintf(fp, "all: libs $(TARGET)\n\n");
-    fprintf(fp, "libs: $(LIB_OBJ)\n\n");
+    fprintf(fp, "TARGET = %s\n", proj_name);
+    fprintf(fp, "all: libs $(TARGET)\n");
+    fprintf(fp, "libs: $(LIB_OBJ)\n");
     fprintf(fp, "$(TARGET): $(OBJ)\n");
-    fprintf(fp, "\t$(CC) $(CFLAGS) -o $@ $(OBJ) $(LDFLAGS) $(LDLIBS)\n\n");
+    fprintf(fp, "\t$(CC) $(CFLAGS) -o $@ $(OBJ) $(LIB_OBJ) $(LDFLAGS) $(LDLIBS)\n");
     fprintf(fp, "%%.o: %%.c\n");
-    fprintf(fp, "\t$(CC) $(CFLAGS) -c $< -o $@\n\n");
+    fprintf(fp, "\t$(CC) $(CFLAGS) -c $< -o $@\n");
     fprintf(fp, "clean:\n");
-    fprintf(fp, "\trm -f $(OBJ) $(LIB_OBJ) $(TARGET)\n\n");
+    fprintf(fp, "\trm -f $(OBJ) $(LIB_OBJ) $(TARGET)\n");
     fprintf(fp, ".PHONY: clean all libs\n");
     fclose(fp);
     for (int i = 0; i < src_count; i++) {
